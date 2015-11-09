@@ -1,12 +1,15 @@
 objectStorage01 Cookbook
 ========================
-オブジェクトストレージをブロックストレージとしてマウント出来る様に、
-CloudFuse をインストールして、fstabを設定する
+SoftLayerのオブジェクト・ストレージをブロック・ストレージとしてマウント出来る様に、
+CloudFuse の導入、fstabの設定をおこない、/os をマウントします。 
+
+この設定は、起動時にも自動マウントしますから、継続的に利用していけます。
 
 このCookbookに、Cloudfuse が含まれていますが、最新版と入れ替えるには、
-https://github.com/redbo/cloudfuse から取得して入れ替えてください。
+https://github.com/redbo/cloudfuse から取得して入れ替えをお願いします。
 
-Requirements
+
+要件(Requirements)
 ------------
 
 - Chef 12.5 以上 (これより前のバージョンで確認していません。)
@@ -15,7 +18,7 @@ Requirements
 - CentOS 7.x 64bit
 
 
-Attributes
+属性(Attributes)
 ----------
 オブジェクト・ストレージをアクセスするために必要な認証情報は、https://control.softlayer.com/ -> 'Storage' -> 'Object Storage' -> Datacenter -> 'View Credentials' に表示される値を利用します。
 
@@ -40,7 +43,6 @@ Attributes
     <td>Object Storage のAPI KEY</td>
     <td>なし</td>
   </tr>
-
   <tr>
     <td>["objectstorage"]["authurl"]</td>
     <td>文字列</td>
