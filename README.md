@@ -9,7 +9,7 @@ https://github.com/redbo/cloudfuse から取得して入れ替えてください
 Requirements
 ------------
 
-- Chef 12.x 以上
+- Chef 12.5 以上 (これより前のバージョンで確認していません。)
 - Ubuntu 14.04 LTS 64bit
 - CentOS 6.x 64bit
 - CentOS 7.x 64bit
@@ -52,22 +52,56 @@ SOFTLAYERのカスタマーポータルにログインして取得して、Attri
 
 使用法(Usage)
 -----
+#### スタンドアロンで実行する方法
+
+knife や chef-server を使わず、chef-solo コマンドを利用するだけの方法です。
+プロビジョニング完了後に、設定対象サーバーにログインして、以下のコマンドを順次実行してきます。
+ここでknifeを実行する理由は、/var/chef/cookbooks のディレクトを作成するためです。
+
+```
+# curl -L https://www.opscode.com/chef/install.sh | bash
+# knife cookbook create dummy -o /var/chef/cookbooks
+# cd /var/chef/cookbooks
+# git clone https://github.com/takara9/objectStorage01
+```
+git のバージョンが1.9以降であれば、次の様に一回で落とせます。
+
+```
+# git -C /var/chef/cookbooks clone https://github.com/takara9/objectStorage01
+```
+適応前に、オブジェクト・ストレージの認証情報をattributesのファイルに設定します。
+ここに設定する認証情報は、https://control.softlayer.com/ -> 'Storage' -> 'Object Storage' -> Datacenter -> 'View Credentials' で表示される値を利用します。
+
+```
+# vi objectStorage01/attributes/default.rb 
+```
+準備が完了したら objectStorage01 クックブックを適用します。
+
+```
+# chef-solo -o objectStorage01
+< 中略 >
+Running handlers complete
+Chef Client finished, 13/14 resources updated in 01 minutes 15 seconds
+```
+
+
+
 
 #### Knife Solo で利用する方法 
-レポジトリ用のディレクトリを作成して初期化する。
+レポジトリ用のディレクトリを作成して初期化します。
 
 ```
 $ mkdir chef-solo-repo
 $ cd chef-solo-repo
 $ knife solo init .
 ```
-site-cookbooksの下にクックブックをクローンする
+site-cookbooksの下にクックブックをクローンします。
 
 ```
 $ cd site-cookbooks/
 $ git clone https://github.com/takara9/objectStorage01 
 ```
-一応、GitHubから落ちてきているか確認
+一応、GitHubから落ちてきているか確認しておきます。
 
 ```
 $ pwd
@@ -76,7 +110,7 @@ $ ls
 objectStorage01
 ```
 attributes/default.rb を編集して認証情報をセットした後、
-hostnameのインスタンスに、クックブックを適用する
+hostnameのインスタンスに、クックブックを適用します。
 
 ```
 $ cd /home/chef/chef-solo-repo
@@ -84,7 +118,7 @@ $ knife solo bootstrap root@hostname -i sshkey -r 'recipe[objectStorage01]'
 ```
 
 #### Knife Server/WorkStation から利用する方法
-Chef WorkStaion のリポジトリに移動して、クックブックをクローンする。
+Chef WorkStaion のリポジトリに移動して、クックブックをクローンします。
 
 ```
 $ pwd
@@ -113,44 +147,33 @@ $ knife bootstrap hostname -i sshkey -N web01 -r 'role[webserver]'
 
 #### 適用後のサーバーの状態
 
-```
-root@web02:~# df -m
-Filesystem     1M-blocks  Used Available Use% Mounted on
-/dev/xvda2         24829  1410     22153   6% /
-none                   1     0         1   0% /sys/fs/cgroup
-udev                 486     1       486   1% /dev
-tmpfs                 99     1        99   1% /run
-none                   5     0         5   0% /run/lock
-none                 495     0       495   0% /run/shm
-none                 100     0       100   0% /run/user
-/dev/xvda1           232    18       202   9% /boot
-cloudfuse        8388608     0   8388608   0% /os
-```
-
-
-#### objectStorage01::default
-
-nodeファイルに定義する場合、run_listにrecipe[objectStorage01]を加えます。
-
-```json
-{
-  "name":"my_node",
-  "run_list": [
-    "recipe[objectStorage01]"
-  ]
-}
-```
-
-#### attributes/default.rb
-
-attributesにオブジェクト・ストレージの認証情報をセットする場合、SoftLayerのカスタマーポータルから、認証情報は取得します。
+クックブックの適用結果を確認します。次の様に'/os'がマウントされていれば成功です。
 
 ```
-default["objectstorage"]["username"]="*************:*********"
-default["objectstorage"]["apikey"]="****************************************************************"
-default["objectstorage"]["authurl"]="https://tok02.objectstorage.softlayer.net/auth/v1.0/"
+# df
+ファイルシス   1K-ブロック    使用     使用可 使用% マウント位置
+/dev/xvda2        25412940 1763356   22352024    8% /
+devtmpfs            497688       0     497688    0% /dev
+tmpfs               505924       0     505924    0% /dev/shm
+tmpfs               505924    6620     499304    2% /run
+tmpfs               505924       0     505924    0% /sys/fs/cgroup
+/dev/xvda1          245679  133940      98632   58% /boot
+cloudfuse       8589934588       0 8589934588    0% /os
+```
+lsコマンドを実行するとオブジェクト・ストレージのコンテナのリストが表示されます。
+/os直下は、コンテナに対応していないので、ファイルを保存できない点が注意です。
 
 ```
+# ls -al /os
+合計 4
+drwxrwx---   2 root  106    0  1月  1  1970 .
+drwxr-xr-x. 19 root root 4096 11月  9 10:01 ..
+drwxrwx---   2 root  106    0 11月  9 10:02 archive
+drwxrwx---   2 root  106    0 11月  9 10:02 backup_contents
+drwxrwx---   2 root  106    0 11月  9 10:02 backup_dbdata
+drwxrwx---   2 root  106    0 11月  9 10:02 log
+```
+
 
 #### role
 roleのオーバーライドに設定する場合の例です。
@@ -197,7 +220,7 @@ e.g.
 License and Authors
 -------------------
 
-see LICENCE file
+see LICENSE
 
 Authors: Maho Takara
 
