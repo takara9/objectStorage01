@@ -8,6 +8,8 @@ CloudFuse の導入、fstabの設定をおこない、/os をマウントしま�
 このCookbookに、Cloudfuse が含まれていますが、最新版と入れ替えるには、
 https://github.com/redbo/cloudfuse から取得して入れ替えをお願いします。
 
+このGitHUBの内容に関する少し詳しい説明は、**qiit** の投稿してありますので、併せて参照いただけると詳しく把握いただけます。 http://qiita.com/MahoTakara/items/8e013b3ef1ad9c663c18
+
 
 要件(Requirements)
 ------------
